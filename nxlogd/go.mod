@@ -1,4 +1,4 @@
-module github.com/mustnot/ScanRank-Collector
+module github.com/mustnot/ScanRank-Collector/nxlogd
 
 go 1.15
 

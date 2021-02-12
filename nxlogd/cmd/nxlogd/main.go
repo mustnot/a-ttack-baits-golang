@@ -98,7 +98,7 @@ func (l *Lookup) Country(ipaddress string) string {
 
 // OpenDB is sql open to mysql database
 func OpenDB() *sql.DB {
-	db, err := sql.Open("mysql", "nxlogd_user:nxlogd_pw@tcp(127.0.0.1:3306)/nxlogd_db")
+	db, err := sql.Open("mysql", "nxlogd_user:nxlogd_pw@tcp(db:3306)/nxlogd_db")
 	ErrorCheck(err)
 	return db
 }

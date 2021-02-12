@@ -29,3 +29,9 @@ services:
       - ./db/log:/var/log/mysql
       - ./db/data:/var/lib/mysql
       - ./db/init-files/:/docker-entrypoint-initdb.d/
+
+  nxlogd:
+    build: ./nxlogd
+    container_name: nxlogd
+    volumes:
+      - ./nginx/log:/var/log/nginx

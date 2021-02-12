@@ -1,0 +1,10 @@
+FROM golang:1.15.8-buster
+
+WORKDIR /app/nxlogd
+COPY . .
+
+RUN go mod tidy \
+    && go get -u -d -v ./...
+RUN go build -o nxlogd ./cmd/nxlogd/main.go
+
+CMD ["tail", "-f", "/var/log/nginx/access.log",  "|", "./nxlogd"]
