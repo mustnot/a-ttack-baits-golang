@@ -1,0 +1,10 @@
+# mysql
+db/data/*
+db/log/*
+
+# nxlogd
+nxlogd/db/*
+nxlogd/example/access.log
+
+# nginx
+nginx/log/*

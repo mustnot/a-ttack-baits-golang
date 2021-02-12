@@ -9,5 +9,23 @@ services:
       - "80:80"
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      - ./nginx/log:/var/log/nginx
     environment:
       - TZ=Asia/Seoul
+
+  db:
+    image: percona:5.7.30
+    container_name: db
+    hostname: db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: "nxlogd_user"
+      MYSQL_PASSWORD: "nxlogd_pw"
+      MYSQL_DATABASE: "nxlogd_db"
+      MYSQL_ROOT_PASSWORD: "root"
+    volumes:
+      - ./db/conf:/etc/percona-server.conf.d
+      - ./db/log:/var/log/mysql
+      - ./db/data:/var/lib/mysql
+      - ./db/init-files/:/docker-entrypoint-initdb.d/
