@@ -1,0 +1,4 @@
+github.com/IncSW/geoip2 v0.1.0 h1:ujmRjJ5TocgMz7YQg1G/qki6I3RHfC3yj6szmdu8l/4=
+github.com/IncSW/geoip2 v0.1.0/go.mod h1:adcasR40vXiUBjtzdaTTKL/6wSf+fgO4M8Gve/XzPUk=
+github.com/go-sql-driver/mysql v1.5.0 h1:ozyZYNQW3x3HtqT1jira07DN2PArx2v7/mN66gGcHOs=
+github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
