@@ -1,19 +1,17 @@
 package main
 
 import (
-	"bufio"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net"
-	"os"
 	"regexp"
 	"strconv"
 	"time"
 
-	"database/sql"
-
 	"github.com/IncSW/geoip2"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/hpcloud/tail"
 )
 
 // ErrorCheck is check for error
@@ -103,25 +101,32 @@ func OpenDB() *sql.DB {
 	return db
 }
 
+// OpenLogFile is open nginx log file
+func OpenLogFile(filepath string) *tail.Tail {
+	tailConf := tail.Config{
+		Follow: true,
+		ReOpen: true,
+	}
+	t, err := tail.TailFile(filepath, tailConf)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return t
+}
+
 func main() {
 	db := OpenDB()
 	defer db.Close()
 
-	stmt, err := db.Prepare(`INSERT INTO access_log (ipaddress, port, country, datetime, method, url, status_code, sent_bytes, referrer, user_agent)
-	                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-	ErrorCheck(err)
+	stmt, _ := db.Prepare(`INSERT INTO access_log (ipaddress, port, country, datetime, method, url, status_code, sent_bytes, referrer, user_agent)
+						   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 
-	scanner := bufio.NewScanner(os.Stdin)
+	stdout := OpenLogFile("/var/log/nginx/access.log")
 	lookup := NewLookup()
-
-	for scanner.Scan() {
-		text := scanner.Text()
-		if err := scanner.Err(); err != nil {
-			ErrorCheck(err)
-		}
-
-		log := NewLog(text)
+	for line := range stdout.Lines {
+		log := NewLog(line.Text)
 		fmt.Println(log)
+
 		if log.IPAddress != "" {
 			country := lookup.Country(log.IPAddress)
 			_, err := stmt.Exec(log.IPAddress, log.Port, country, log.Datetime, log.Method, log.URL, log.StatusCode, log.SentBytes, log.Referrer, log.UserAgent)
