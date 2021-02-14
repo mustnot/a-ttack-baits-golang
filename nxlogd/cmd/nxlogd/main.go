@@ -74,24 +74,47 @@ func Parse(text string) *ParseResult {
 
 // Lookup struct
 type Lookup struct {
-	reader *geoip2.CityReader
+	cityReader *geoip2.CityReader
+	asnReader  *geoip2.ASNReader
 }
 
 // NewLookup is initializer
 func NewLookup() *Lookup {
 	cityReader, err := geoip2.NewCityReaderFromFile("db/GeoLite2-City.mmdb")
+	asnReader, err := geoip2.NewASNReaderFromFile("db/GeoLite2-ASN.mmdb")
 	ErrorCheck(err)
 
 	return &Lookup{
-		reader: cityReader,
+		cityReader: cityReader,
+		asnReader:  asnReader,
 	}
 }
 
+// GeoLocation struct
+type GeoLocation struct {
+	ASN     string
+	ISOCode string
+	Country string
+	City    string
+	Long    float64
+	Lat     float64
+}
+
 // Country is get country in geolocation
-func (l *Lookup) Country(ipaddress string) string {
-	record, err := l.reader.Lookup(net.ParseIP(ipaddress))
+func (l *Lookup) geolocation(ipaddress string) *GeoLocation {
+	cityRecord, err := l.cityReader.Lookup(net.ParseIP(ipaddress))
 	ErrorCheck(err)
-	return record.Country.ISOCode
+	asnRecord, err := l.asnReader.Lookup(net.ParseIP(ipaddress))
+	ErrorCheck(err)
+
+	return &GeoLocation{
+		ASN:     asnRecord.AutonomousSystemOrganization,
+		ISOCode: cityRecord.Country.ISOCode,
+		Country: cityRecord.Country.Names["en"],
+		City:    cityRecord.City.Names["en"],
+		Long:    cityRecord.Location.Longitude,
+		Lat:     cityRecord.Location.Latitude,
+	}
 }
 
 // OpenDB is sql open to mysql database
@@ -118,8 +141,8 @@ func main() {
 	db := OpenDB()
 	defer db.Close()
 
-	stmt, _ := db.Prepare(`INSERT INTO access_log (ipaddress, port, country, datetime, method, url, status_code, sent_bytes, referrer, user_agent)
-						   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+	stmt, _ := db.Prepare(`INSERT INTO access_log (datetime, ipaddress, port, asn, iso_code, country, city, long, lat, url, user_agent)
+						   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 
 	stdout := OpenLogFile("/var/log/nginx/access.log")
 	lookup := NewLookup()
@@ -128,8 +151,8 @@ func main() {
 		fmt.Println(log)
 
 		if log.IPAddress != "" {
-			country := lookup.Country(log.IPAddress)
-			_, err := stmt.Exec(log.IPAddress, log.Port, country, log.Datetime, log.Method, log.URL, log.StatusCode, log.SentBytes, log.Referrer, log.UserAgent)
+			gl := lookup.geolocation(log.IPAddress)
+			_, err := stmt.Exec(log.Datetime, log.IPAddress, log.Port, gl.ASN, gl.ISOCode, gl.Country, gl.City, gl.Long, gl.Lat, log.URL, log.UserAgent)
 			ErrorCheck(err)
 		}
 	}
