@@ -119,7 +119,7 @@ func (l *Lookup) geolocation(ipaddress string) *GeoLocation {
 
 // OpenDB is sql open to mysql database
 func OpenDB() *sql.DB {
-	db, err := sql.Open("mysql", "nxlogd_user:nxlogd_pw@tcp(127.0.0.1:3306)/nxlogd_db")
+	db, err := sql.Open("mysql", "nxlogd_user:nxlogd_pw@tcp(db:3306)/nxlogd_db")
 	ErrorCheck(err)
 	return db
 }
@@ -145,7 +145,7 @@ func main() {
 						   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	ErrorCheck(err)
 
-	stdout := OpenLogFile("example/access.log")
+	stdout := OpenLogFile("/var/log/nginx/access.log")
 	lookup := NewLookup()
 	for line := range stdout.Lines {
 		log := NewLog(line.Text)
