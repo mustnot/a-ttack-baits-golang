@@ -6,8 +6,8 @@ CREATE TABLE nxlogd_db.`access_log` (
   `iso_code` varchar(3) NOT NULL,
   `country` varchar(100) NOT NULL,
   `city`  varchar(255) NOT NULL,
-  `long`  FLOAT NOT NULL DEFAULT '0',
-  `lat`  FLOAT NOT NULL DEFAULT '0',
+  `longitude`  FLOAT NOT NULL,
+  `latitude`  FLOAT NOT NULL,
   `url` text,
   `user_agent` text
 );
