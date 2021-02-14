@@ -92,12 +92,12 @@ func NewLookup() *Lookup {
 
 // GeoLocation struct
 type GeoLocation struct {
-	ASN     string
-	ISOCode string
-	Country string
-	City    string
-	Long    float64
-	Lat     float64
+	ASN       string
+	ISOCode   string
+	Country   string
+	City      string
+	Longitude float64
+	Latitude  float64
 }
 
 // Country is get country in geolocation
@@ -108,18 +108,18 @@ func (l *Lookup) geolocation(ipaddress string) *GeoLocation {
 	ErrorCheck(err)
 
 	return &GeoLocation{
-		ASN:     asnRecord.AutonomousSystemOrganization,
-		ISOCode: cityRecord.Country.ISOCode,
-		Country: cityRecord.Country.Names["en"],
-		City:    cityRecord.City.Names["en"],
-		Long:    cityRecord.Location.Longitude,
-		Lat:     cityRecord.Location.Latitude,
+		ASN:       asnRecord.AutonomousSystemOrganization,
+		ISOCode:   cityRecord.Country.ISOCode,
+		Country:   cityRecord.Country.Names["en"],
+		City:      cityRecord.City.Names["en"],
+		Longitude: cityRecord.Location.Longitude,
+		Latitude:  cityRecord.Location.Latitude,
 	}
 }
 
 // OpenDB is sql open to mysql database
 func OpenDB() *sql.DB {
-	db, err := sql.Open("mysql", "nxlogd_user:nxlogd_pw@tcp(db:3306)/nxlogd_db")
+	db, err := sql.Open("mysql", "nxlogd_user:nxlogd_pw@tcp(127.0.0.1:3306)/nxlogd_db")
 	ErrorCheck(err)
 	return db
 }
@@ -141,10 +141,11 @@ func main() {
 	db := OpenDB()
 	defer db.Close()
 
-	stmt, _ := db.Prepare(`INSERT INTO access_log (datetime, ipaddress, port, asn, iso_code, country, city, long, lat, url, user_agent)
+	stmt, err := db.Prepare(`INSERT INTO access_log (datetime, ipaddress, port, asn, iso_code, country, city, longitude, latitude, url, user_agent)
 						   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+	ErrorCheck(err)
 
-	stdout := OpenLogFile("/var/log/nginx/access.log")
+	stdout := OpenLogFile("example/access.log")
 	lookup := NewLookup()
 	for line := range stdout.Lines {
 		log := NewLog(line.Text)
@@ -152,7 +153,7 @@ func main() {
 
 		if log.IPAddress != "" {
 			gl := lookup.geolocation(log.IPAddress)
-			_, err := stmt.Exec(log.Datetime, log.IPAddress, log.Port, gl.ASN, gl.ISOCode, gl.Country, gl.City, gl.Long, gl.Lat, log.URL, log.UserAgent)
+			_, err := stmt.Exec(log.Datetime, log.IPAddress, log.Port, gl.ASN, gl.ISOCode, gl.Country, gl.City, gl.Longitude, gl.Latitude, log.URL, log.UserAgent)
 			ErrorCheck(err)
 		}
 	}
