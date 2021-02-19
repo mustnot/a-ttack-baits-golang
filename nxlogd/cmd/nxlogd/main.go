@@ -82,7 +82,6 @@ type Lookup struct {
 func NewLookup() *Lookup {
 	cityReader, err := geoip2.NewCityReaderFromFile("db/GeoLite2-City.mmdb")
 	asnReader, err := geoip2.NewASNReaderFromFile("db/GeoLite2-ASN.mmdb")
-	ErrorCheck(err)
 
 	return &Lookup{
 		cityReader: cityReader,
@@ -101,11 +100,16 @@ type GeoLocation struct {
 }
 
 // Country is get country in geolocation
-func (l *Lookup) geolocation(ipaddress string) *GeoLocation {
+func (l *Lookup) geolocation(ipaddress string) (*GeoLocation, Error) {
+
 	cityRecord, err := l.cityReader.Lookup(net.ParseIP(ipaddress))
-	ErrorCheck(err)
+	if err != nil {
+		return &GeoLocation{}, err
+	}
 	asnRecord, err := l.asnReader.Lookup(net.ParseIP(ipaddress))
-	ErrorCheck(err)
+	if err != nil {
+		return &GeoLocation{}, err
+	}
 
 	return &GeoLocation{
 		ASN:       asnRecord.AutonomousSystemOrganization,
@@ -114,7 +118,7 @@ func (l *Lookup) geolocation(ipaddress string) *GeoLocation {
 		City:      cityRecord.City.Names["en"],
 		Longitude: cityRecord.Location.Longitude,
 		Latitude:  cityRecord.Location.Latitude,
-	}
+	}, nil
 }
 
 // OpenDB is sql open to mysql database
@@ -152,8 +156,8 @@ func main() {
 		fmt.Println(log)
 
 		if log.IPAddress != "" {
-			gl := lookup.geolocation(log.IPAddress)
-			_, err := stmt.Exec(log.Datetime, log.IPAddress, log.Port, gl.ASN, gl.ISOCode, gl.Country, gl.City, gl.Longitude, gl.Latitude, log.URL, log.UserAgent)
+			gl, err := lookup.geolocation(log.IPAddress)
+			_, err = stmt.Exec(log.Datetime, log.IPAddress, log.Port, gl.ASN, gl.ISOCode, gl.Country, gl.City, gl.Longitude, gl.Latitude, log.URL, log.UserAgent)
 			ErrorCheck(err)
 		}
 	}
