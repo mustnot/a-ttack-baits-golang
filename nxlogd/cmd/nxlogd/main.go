@@ -80,8 +80,8 @@ type Lookup struct {
 
 // NewLookup is initializer
 func NewLookup() *Lookup {
-	cityReader, err := geoip2.NewCityReaderFromFile("db/GeoLite2-City.mmdb")
-	asnReader, err := geoip2.NewASNReaderFromFile("db/GeoLite2-ASN.mmdb")
+	cityReader, _ := geoip2.NewCityReaderFromFile("db/GeoLite2-City.mmdb")
+	asnReader, _ := geoip2.NewASNReaderFromFile("db/GeoLite2-ASN.mmdb")
 
 	return &Lookup{
 		cityReader: cityReader,
@@ -100,7 +100,7 @@ type GeoLocation struct {
 }
 
 // Country is get country in geolocation
-func (l *Lookup) geolocation(ipaddress string) (*GeoLocation, Error) {
+func (l *Lookup) geolocation(ipaddress string) (*GeoLocation, error) {
 
 	cityRecord, err := l.cityReader.Lookup(net.ParseIP(ipaddress))
 	if err != nil {
